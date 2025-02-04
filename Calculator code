@@ -1,0 +1,401 @@
+import React, { useState, useEffect } from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+
+const Calculator = () => {
+  // Previous calculator state
+  const [display, setDisplay] = useState('0');
+  const [memory, setMemory] = useState(null);
+  const [operation, setOperation] = useState(null);
+  const [gameScore, setGameScore] = useState(0);
+  const [gameType, setGameType] = useState('multiplication');
+  const [gameNumber1, setGameNumber1] = useState(0);
+  const [gameNumber2, setGameNumber2] = useState(0);
+  const [gameAnswer, setGameAnswer] = useState('');
+  const [feedback, setFeedback] = useState('');
+
+  // New memory game state
+  const [sequence, setSequence] = useState([]);
+  const [playerSequence, setPlayerSequence] = useState([]);
+  const [isShowingSequence, setIsShowingSequence] = useState(false);
+  const [memoryGameScore, setMemoryGameScore] = useState(0);
+  const [gameOver, setGameOver] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Previous calculator functions remain the same
+  const handleNumber = (num) => {
+    setDisplay(display === '0' ? String(num) : display + num);
+  };
+
+  const handleOperation = (op) => {
+    setOperation(op);
+    setMemory(parseFloat(display));
+    setDisplay('0');
+  };
+
+  const handleSpecialOperation = (op) => {
+    const num = parseFloat(display);
+    let result;
+    switch (op) {
+      case 'sqrt':
+        result = Math.sqrt(num);
+        break;
+      case 'square':
+        result = num * num;
+        break;
+      case 'percent':
+        result = num / 100;
+        break;
+      case '1/x':
+        result = 1 / num;
+        break;
+      case '+/-':
+        result = -num;
+        break;
+      default:
+        return;
+    }
+    setDisplay(String(result));
+  };
+
+  const handleEqual = () => {
+    const current = parseFloat(display);
+    let result = 0;
+
+    switch (operation) {
+      case '+':
+        result = memory + current;
+        break;
+      case '-':
+        result = memory - current;
+        break;
+      case '*':
+        result = memory * current;
+        break;
+      case '/':
+        result = memory / current;
+        break;
+      case 'pow':
+        result = Math.pow(memory, current);
+        break;
+      default:
+        return;
+    }
+
+    setDisplay(String(result));
+    setOperation(null);
+    setMemory(null);
+  };
+
+  const handleClear = () => {
+    setDisplay('0');
+    setMemory(null);
+    setOperation(null);
+  };
+
+  // Previous math game functions
+  const generateNewProblem = () => {
+    let num1, num2;
+    switch (gameType) {
+      case 'multiplication':
+        num1 = Math.floor(Math.random() * 12);
+        num2 = Math.floor(Math.random() * 12);
+        break;
+      case 'addition':
+        num1 = Math.floor(Math.random() * 100);
+        num2 = Math.floor(Math.random() * 100);
+        break;
+      case 'squares':
+        num1 = Math.floor(Math.random() * 20);
+        num2 = num1;
+        break;
+    }
+    setGameNumber1(num1);
+    setGameNumber2(num2);
+    setGameAnswer('');
+    setFeedback('');
+  };
+
+  const checkAnswer = () => {
+    let correctAnswer;
+    switch (gameType) {
+      case 'multiplication':
+        correctAnswer = gameNumber1 * gameNumber2;
+        break;
+      case 'addition':
+        correctAnswer = gameNumber1 + gameNumber2;
+        break;
+      case 'squares':
+        correctAnswer = gameNumber1 * gameNumber1;
+        break;
+    }
+    
+    if (parseInt(gameAnswer) === correctAnswer) {
+      setFeedback('Correct! 🎉');
+      setGameScore(gameScore + 1);
+      setTimeout(generateNewProblem, 1500);
+    } else {
+      setFeedback('Try again!');
+    }
+  };
+
+  // New memory game functions
+  const startNewMemoryGame = () => {
+    const newSequence = [Math.floor(Math.random() * 10)];
+    setSequence(newSequence);
+    setPlayerSequence([]);
+    setGameOver(false);
+    setMemoryGameScore(0);
+    setCurrentIndex(0);
+    showSequence(newSequence);
+  };
+
+  const showSequence = async (seq) => {
+    setIsShowingSequence(true);
+    setCurrentIndex(-1);
+    
+    for (let i = 0; i < seq.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setCurrentIndex(i);
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    setCurrentIndex(-1);
+    setIsShowingSequence(false);
+  };
+
+  const handleNumberClick = (number) => {
+    if (isShowingSequence || gameOver) return;
+
+    const newPlayerSequence = [...playerSequence, number];
+    setPlayerSequence(newPlayerSequence);
+
+    if (newPlayerSequence[newPlayerSequence.length - 1] !== sequence[newPlayerSequence.length - 1]) {
+      setGameOver(true);
+      return;
+    }
+
+    if (newPlayerSequence.length === sequence.length) {
+      setMemoryGameScore(memoryGameScore + 1);
+      const newSequence = [...sequence, Math.floor(Math.random() * 10)];
+      setSequence(newSequence);
+      setPlayerSequence([]);
+      setTimeout(() => showSequence(newSequence), 1000);
+    }
+  };
+
+  return (
+    <Card className="w-96 bg-pink-50">
+      <Tabs defaultValue="calculator" className="w-full">
+        <TabsList className="w-full bg-pink-200">
+          <TabsTrigger value="calculator" className="w-1/3 data-[state=active]:bg-pink-300">Calculator</TabsTrigger>
+          <TabsTrigger value="mathgames" className="w-1/3 data-[state=active]:bg-pink-300">Math Games</TabsTrigger>
+          <TabsTrigger value="memorygame" className="w-1/3 data-[state=active]:bg-pink-300">Memory Game</TabsTrigger>
+        </TabsList>
+
+        <CardContent>
+          {/* Previous Calculator Tab Content */}
+          <TabsContent value="calculator">
+            <div className="mb-4">
+              <div className="bg-pink-100 p-4 text-right text-2xl rounded mb-4 shadow-inner">
+                {display}
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                <Button onClick={() => handleSpecialOperation('sqrt')} variant="outline" className="bg-pink-100 hover:bg-pink-200">
+                  √
+                </Button>
+                <Button onClick={() => handleSpecialOperation('square')} variant="outline" className="bg-pink-100 hover:bg-pink-200">
+                  x²
+                </Button>
+                <Button onClick={() => handleSpecialOperation('percent')} variant="outline" className="bg-pink-100 hover:bg-pink-200">
+                  %
+                </Button>
+                <Button onClick={() => handleSpecialOperation('1/x')} variant="outline" className="bg-pink-100 hover:bg-pink-200">
+                  1/x
+                </Button>
+
+                {[7, 8, 9, '/'].map((btn) => (
+                  <Button
+                    key={btn}
+                    onClick={() => typeof btn === 'number' ? handleNumber(btn) : handleOperation(btn)}
+                    variant="outline"
+                    className="bg-pink-100 hover:bg-pink-200"
+                  >
+                    {btn}
+                  </Button>
+                ))}
+                {[4, 5, 6, '*'].map((btn) => (
+                  <Button
+                    key={btn}
+                    onClick={() => typeof btn === 'number' ? handleNumber(btn) : handleOperation(btn)}
+                    variant="outline"
+                    className="bg-pink-100 hover:bg-pink-200"
+                  >
+                    {btn}
+                  </Button>
+                ))}
+                {[1, 2, 3, '-'].map((btn) => (
+                  <Button
+                    key={btn}
+                    onClick={() => typeof btn === 'number' ? handleNumber(btn) : handleOperation(btn)}
+                    variant="outline"
+                    className="bg-pink-100 hover:bg-pink-200"
+                  >
+                    {btn}
+                  </Button>
+                ))}
+                {[0, '.', '=', '+'].map((btn) => (
+                  <Button
+                    key={btn}
+                    onClick={() => {
+                      if (btn === '=') handleEqual();
+                      else if (btn === '.') handleNumber('.');
+                      else if (typeof btn === 'number') handleNumber(btn);
+                      else handleOperation(btn);
+                    }}
+                    variant="outline"
+                    className="bg-pink-100 hover:bg-pink-200"
+                  >
+                    {btn}
+                  </Button>
+                ))}
+                <Button
+                  className="col-span-4 bg-pink-300 hover:bg-pink-400"
+                  onClick={handleClear}
+                >
+                  Clear
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Previous Math Games Tab Content */}
+          <TabsContent value="mathgames">
+            <div className="text-center">
+              <h3 className="text-lg font-bold mb-4">Math Games</h3>
+              <p className="mb-2">Score: {gameScore}</p>
+              
+              <div className="mb-4">
+                <Button
+                  onClick={() => {
+                    setGameType('multiplication');
+                    generateNewProblem();
+                  }}
+                  variant="outline"
+                  className="mx-1 bg-pink-100 hover:bg-pink-200"
+                >
+                  Multiplication
+                </Button>
+                <Button
+                  onClick={() => {
+                    setGameType('addition');
+                    generateNewProblem();
+                  }}
+                  variant="outline"
+                  className="mx-1 bg-pink-100 hover:bg-pink-200"
+                >
+                  Addition
+                </Button>
+                <Button
+                  onClick={() => {
+                    setGameType('squares');
+                    generateNewProblem();
+                  }}
+                  variant="outline"
+                  className="mx-1 bg-pink-100 hover:bg-pink-200"
+                >
+                  Squares
+                </Button>
+              </div>
+
+              <div className="text-2xl mb-4">
+                {gameType === 'squares' ? (
+                  `${gameNumber1}² = ?`
+                ) : (
+                  `${gameNumber1} ${gameType === 'multiplication' ? '×' : '+'} ${gameNumber2} = ?`
+                )}
+              </div>
+              
+              <input
+                type="number"
+                value={gameAnswer}
+                onChange={(e) => setGameAnswer(e.target.value)}
+                className="border p-2 rounded mb-4 w-24 text-center bg-pink-50"
+              />
+              <div className="space-x-2">
+                <Button onClick={checkAnswer} className="bg-pink-300 hover:bg-pink-400">Check</Button>
+                <Button onClick={generateNewProblem} variant="outline" className="bg-pink-100 hover:bg-pink-200">New Problem</Button>
+              </div>
+              <p className="mt-4 text-lg">{feedback}</p>
+            </div>
+          </TabsContent>
+
+          {/* New Memory Game Tab Content */}
+          <TabsContent value="memorygame">
+            <div className="text-center">
+              <h3 className="text-lg font-bold mb-4">Number Memory Game</h3>
+              <p className="mb-4">Score: {memoryGameScore}</p>
+              
+              {gameOver ? (
+                <div className="mb-4">
+                  <p className="text-xl mb-4">Game Over! Your score: {memoryGameScore}</p>
+                  <Button 
+                    onClick={startNewMemoryGame}
+                    className="bg-pink-300 hover:bg-pink-400"
+                  >
+                    Play Again
+                  </Button>
+                </div>
+              ) : (
+                <div>
+                  {!isShowingSequence && sequence.length === 0 && (
+                    <Button 
+                      onClick={startNewMemoryGame}
+                      className="bg-pink-300 hover:bg-pink-400 mb-4"
+                    >
+                      Start Game
+                    </Button>
+                  )}
+                  
+                  {sequence.length > 0 && (
+                    <div>
+                      <div className="text-2xl mb-4">
+                        {isShowingSequence ? (
+                          <span className="font-bold">{currentIndex >= 0 ? sequence[currentIndex] : '?'}</span>
+                        ) : (
+                          'Your turn!'
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto mb-4">
+                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                          <Button
+                            key={num}
+                            onClick={() => handleNumberClick(num)}
+                            disabled={isShowingSequence}
+                            className={`bg-pink-100 hover:bg-pink-200 ${
+                              isShowingSequence ? 'opacity-50' : ''
+                            }`}
+                          >
+                            {num}
+                          </Button>
+                        ))}
+                      </div>
+                      
+                      <p className="text-sm">
+                        {isShowingSequence ? 'Watch the sequence...' : `Enter ${playerSequence.length + 1} of ${sequence.length}`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </CardContent>
+      </Tabs>
+    </Card>
+  );
+};
+
+export default Calculator;
