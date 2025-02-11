@@ -1,0 +1,332 @@
+import React, { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Heart, Calculator, ArrowLeftRight, Trash2, Cookie } from 'lucide-react';
+
+// Main Calculator Component
+const Calculator = () => {
+  const [display, setDisplay] = useState('0');
+  const [scientificMode, setScientificMode] = useState(false);
+
+  const handleNumber = (num) => {
+    setDisplay(prev => prev === '0' ? String(num) : prev + num);
+  };
+
+  const handleOperator = (op) => {
+    setDisplay(prev => prev + op);
+  };
+
+  const calculate = () => {
+    try {
+      // Replace special functions with JavaScript Math equivalents
+      let expression = display
+        .replace(/sin/g, 'Math.sin')
+        .replace(/cos/g, 'Math.cos')
+        .replace(/tan/g, 'Math.tan')
+        .replace(/log/g, 'Math.log10')
+        .replace(/ln/g, 'Math.log')
+        .replace(/π/g, 'Math.PI')
+        .replace(/√/g, 'Math.sqrt');
+      
+      setDisplay(String(eval(expression)));
+    } catch (error) {
+      setDisplay('Error');
+    }
+  };
+
+  const clear = () => setDisplay('0');
+
+  return (
+    <div className="p-4">
+      <div className="bg-gray-100 p-4 rounded-lg mb-4 text-right text-2xl min-h-16">
+        {display}
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {scientificMode && (
+          <>
+            <Button onClick={() => handleOperator('sin(')} className="bg-blue-500">sin</Button>
+            <Button onClick={() => handleOperator('cos(')} className="bg-blue-500">cos</Button>
+            <Button onClick={() => handleOperator('tan(')} className="bg-blue-500">tan</Button>
+            <Button onClick={() => handleOperator('π')} className="bg-blue-500">π</Button>
+            <Button onClick={() => handleOperator('log(')} className="bg-blue-500">log</Button>
+            <Button onClick={() => handleOperator('ln(')} className="bg-blue-500">ln</Button>
+            <Button onClick={() => handleOperator('√(')} className="bg-blue-500">√</Button>
+            <Button onClick={() => handleOperator('^')} className="bg-blue-500">^</Button>
+          </>
+        )}
+        <Button onClick={() => handleNumber(7)}>7</Button>
+        <Button onClick={() => handleNumber(8)}>8</Button>
+        <Button onClick={() => handleNumber(9)}>9</Button>
+        <Button onClick={() => handleOperator('/')} className="bg-orange-500">/</Button>
+        <Button onClick={() => handleNumber(4)}>4</Button>
+        <Button onClick={() => handleNumber(5)}>5</Button>
+        <Button onClick={() => handleNumber(6)}>6</Button>
+        <Button onClick={() => handleOperator('*')} className="bg-orange-500">×</Button>
+        <Button onClick={() => handleNumber(1)}>1</Button>
+        <Button onClick={() => handleNumber(2)}>2</Button>
+        <Button onClick={() => handleNumber(3)}>3</Button>
+        <Button onClick={() => handleOperator('-')} className="bg-orange-500">-</Button>
+        <Button onClick={() => handleNumber(0)}>0</Button>
+        <Button onClick={() => handleOperator('.')}>.</Button>
+        <Button onClick={calculate} className="bg-green-500">=</Button>
+        <Button onClick={() => handleOperator('+')} className="bg-orange-500">+</Button>
+        <Button onClick={clear} className="col-span-2 bg-red-500">Clear</Button>
+        <Button 
+          onClick={() => setScientificMode(!scientificMode)} 
+          className="col-span-2 bg-purple-500"
+        >
+          {scientificMode ? 'Basic' : 'Scientific'}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+// Converter Component
+const Converter = () => {
+  const [value, setValue] = useState('');
+  const [fromUnit, setFromUnit] = useState('mi');
+  const [toUnit, setToUnit] = useState('km');
+  const [result, setResult] = useState('');
+
+  const conversions = {
+    length: {
+      mi: { km: 1.60934, m: 1609.34 },
+      km: { mi: 0.621371, m: 1000 },
+      m: { km: 0.001, mi: 0.000621371 }
+    },
+    weight: {
+      lb: { kg: 0.453592, g: 453.592 },
+      kg: { lb: 2.20462, g: 1000 },
+      g: { kg: 0.001, lb: 0.00220462 }
+    }
+  };
+
+  const convert = () => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+      setResult('Invalid input');
+      return;
+    }
+
+    for (const category of Object.values(conversions)) {
+      if (fromUnit in category && toUnit in category[fromUnit]) {
+        setResult(`${(numValue * category[fromUnit][toUnit]).toFixed(2)} ${toUnit}`);
+        return;
+      }
+    }
+    setResult('Invalid conversion');
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      <div className="flex space-x-2">
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="border p-2 rounded flex-1"
+          placeholder="Enter value"
+        />
+        <select
+          value={fromUnit}
+          onChange={(e) => setFromUnit(e.target.value)}
+          className="border p-2 rounded"
+        >
+          <option value="mi">Miles</option>
+          <option value="km">Kilometers</option>
+          <option value="m">Meters</option>
+          <option value="lb">Pounds</option>
+          <option value="kg">Kilograms</option>
+          <option value="g">Grams</option>
+        </select>
+        <ArrowLeftRight className="my-auto" />
+        <select
+          value={toUnit}
+          onChange={(e) => setToUnit(e.target.value)}
+          className="border p-2 rounded"
+        >
+          <option value="km">Kilometers</option>
+          <option value="mi">Miles</option>
+          <option value="m">Meters</option>
+          <option value="kg">Kilograms</option>
+          <option value="lb">Pounds</option>
+          <option value="g">Grams</option>
+        </select>
+      </div>
+      <Button onClick={convert} className="w-full">Convert</Button>
+      <div className="text-center text-xl font-bold">{result}</div>
+    </div>
+  );
+};
+
+// Tamagotchi Component
+const Tamagotchi = () => {
+  const [pet, setPet] = useState({
+    name: 'Tama',
+    happiness: 50,
+    hunger: 50,
+    energy: 50,
+    isAlive: true
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPet(prev => ({
+        ...prev,
+        hunger: Math.max(0, prev.hunger - 1),
+        energy: Math.max(0, prev.energy - 1),
+        happiness: Math.max(0, prev.happiness - 1),
+        isAlive: prev.hunger > 0 && prev.energy > 0
+      }));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const feed = () => {
+    setPet(prev => ({
+      ...prev,
+      hunger: Math.min(100, prev.hunger + 20)
+    }));
+  };
+
+  const play = () => {
+    setPet(prev => ({
+      ...prev,
+      happiness: Math.min(100, prev.happiness + 20),
+      energy: Math.max(0, prev.energy - 10)
+    }));
+  };
+
+  const sleep = () => {
+    setPet(prev => ({
+      ...prev,
+      energy: Math.min(100, prev.energy + 30),
+      hunger: Math.max(0, prev.hunger - 10)
+    }));
+  };
+
+  const reset = () => {
+    setPet({
+      name: 'Tama',
+      happiness: 50,
+      hunger: 50,
+      energy: 50,
+      isAlive: true
+    });
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold mb-2">{pet.name}</h2>
+        {pet.isAlive ? (
+          <div className="text-6xl mb-4">
+            {pet.happiness > 70 ? '😊' : pet.happiness > 30 ? '😐' : '😢'}
+          </div>
+        ) : (
+          <div className="text-6xl mb-4">💀</div>
+        )}
+      </div>
+      
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <span>Happiness</span>
+          <div className="w-32 bg-gray-200 rounded-full h-4">
+            <div 
+              className="bg-yellow-400 rounded-full h-4"
+              style={{ width: `${pet.happiness}%` }}
+            />
+          </div>
+        </div>
+        <div className="flex justify-between">
+          <span>Hunger</span>
+          <div className="w-32 bg-gray-200 rounded-full h-4">
+            <div 
+              className="bg-green-400 rounded-full h-4"
+              style={{ width: `${pet.hunger}%` }}
+            />
+          </div>
+        </div>
+        <div className="flex justify-between">
+          <span>Energy</span>
+          <div className="w-32 bg-gray-200 rounded-full h-4">
+            <div 
+              className="bg-blue-400 rounded-full h-4"
+              style={{ width: `${pet.energy}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <Button 
+          onClick={feed} 
+          disabled={!pet.isAlive}
+          className="flex items-center justify-center gap-2"
+        >
+          <Cookie size={16} /> Feed
+        </Button>
+        <Button 
+          onClick={play} 
+          disabled={!pet.isAlive}
+          className="flex items-center justify-center gap-2"
+        >
+          <Heart size={16} /> Play
+        </Button>
+        <Button 
+          onClick={sleep} 
+          disabled={!pet.isAlive}
+          className="flex items-center justify-center gap-2"
+        >
+          💤 Sleep
+        </Button>
+        <Button 
+          onClick={reset}
+          className="flex items-center justify-center gap-2 bg-red-500"
+        >
+          <Trash2 size={16} /> Reset
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+// Main App Component
+const App = () => {
+  return (
+    <Card className="w-96">
+      <CardContent className="p-0">
+        <Tabs defaultValue="calculator">
+          <TabsList className="w-full">
+            <TabsTrigger value="calculator" className="flex-1">
+              <Calculator size={16} className="mr-2" />
+              Calculator
+            </TabsTrigger>
+            <TabsTrigger value="converter" className="flex-1">
+              <ArrowLeftRight size={16} className="mr-2" />
+              Converter
+            </TabsTrigger>
+            <TabsTrigger value="tamagotchi" className="flex-1">
+              <Heart size={16} className="mr-2" />
+              Tamagotchi
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="calculator">
+            <Calculator />
+          </TabsContent>
+          <TabsContent value="converter">
+            <Converter />
+          </TabsContent>
+          <TabsContent value="tamagotchi">
+            <Tamagotchi />
+          </TabsContent>
+        </CardContent>
+      </TabsContent>
+    </Card>
+  );
+};
+
+export default App;
